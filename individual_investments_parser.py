@@ -1,5 +1,4 @@
 import datetime
-
 from RPA.Browser.Selenium import Selenium
 
 
@@ -50,14 +49,20 @@ class IndividualInvestmentsParser:
         headers = self._get_table_headers(table=investments_table)
         rows = self._get_table_rows(table=investments_table)
         investments = []
+
+        self.browser.wait_until_element_is_visible(
+            locator=[investments_table, 'css:table#investments-table-object tbody tr td a'],
+            timeout=datetime.timedelta(seconds=10)
+        )
         for row in rows:
             investment = {}
             for num, cell in enumerate(self._get_row_cells(row)):
-                count_a = self.browser.get_element_count(locator=[cell, 'css:a'])
-                if count_a > 0:
-                    investment['link'] = self.browser.get_element_attribute(locator=[cell, 'css:a'], attribute='href')
-                else:
-                    investment['link'] = ''
+                if num == 0:
+                    count_a = self.browser.get_element_count(locator=[cell, 'css:a'])
+                    if count_a > 0:
+                        investment['link'] = self.browser.get_element_attribute(locator=[cell, 'css:a'], attribute='href')
+                    else:
+                        investment['link'] = ''
                 investment[headers[num]] = cell.text
             investments.append(investment)
         return investments

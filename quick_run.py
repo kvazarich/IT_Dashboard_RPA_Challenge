@@ -1,6 +1,8 @@
+from RPA.Browser.Selenium import Selenium
+
 from agencies_list_parser import AgenciesListParser
 from individual_investments_parser import IndividualInvestmentsParser
-from utils import XlsxSaver
+from utils import XlsxSaver, PDFLoader
 
 
 def get_agencies():
@@ -31,7 +33,10 @@ def get_agency_details(agency_id):
 
 
 if __name__ == "__main__":
-    agencies = get_agencies()
-    wb = get_agencies_workbook(agencies)
+    # agencies = get_agencies()
+    # wb = get_agencies_workbook(agencies)
     details = get_agency_details(agency_id="005")
-    save_workbook(details, wb)
+    links = [detail['link'] for detail in details if detail['link']]
+    # save_workbook(details, wb)
+    browser = Selenium()
+    PDFLoader.load_bulk(links=links, browser=browser, folder_to_load='output')
