@@ -2,7 +2,7 @@ from RPA.Browser.Selenium import Selenium
 
 from agencies_list_parser import AgenciesListParser
 from individual_investments_parser import IndividualInvestmentsParser
-from utils import XlsxSaver, PDFLoader
+from utils import XlsxSaver, PDFHelper
 
 
 def get_agencies():
@@ -39,4 +39,6 @@ if __name__ == "__main__":
     links = [detail['link'] for detail in details if detail['link']]
     # save_workbook(details, wb)
     browser = Selenium()
-    PDFLoader.load_bulk(links=links, browser=browser, folder_to_load='output')
+    filepaths = PDFHelper.load_bulk(links=links, browser=browser, folder_to_load='output')
+    # print(PDFHelper.parse('/home/kvazarich/PycharmProjects/IT_Dashboard_RPA_Challenge/output/005-000000018.pdf'))
+    PDFHelper.validate(details, filepaths)

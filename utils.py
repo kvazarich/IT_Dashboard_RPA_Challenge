@@ -1,7 +1,10 @@
 from RPA.Excel.Files import Files
 from RPA.Browser.Selenium import Selenium
 from RPA.FileSystem import FileSystem
-import os
+import os, re
+
+from RPA.PDF import PDF
+
 
 class XlsxSaver:
     def __init__(self, values: list, worksheet: str, path: str, workbook=None):
@@ -48,33 +51,61 @@ class XlsxSaver:
         self._headers_index = None
 
 
-class PDFLoader:
+class PDFHelper:
     @classmethod
     def load_bulk(cls, links: list, browser: Selenium, folder_to_load=None):
         load_dir = f'{os.getcwd()}/{folder_to_load}' if folder_to_load is not None else os.getcwd()
         browser.set_download_directory(load_dir)
-        filenames = []
+        filepaths = {}
         filesystem = FileSystem()
         for num, link in enumerate(links):
-            filename = f"{link.split('/')[-1][:-1]}.pdf"
+            filename = f"{link.split('/')[-1]}.pdf"
             if filesystem.does_file_exist(f'{load_dir}/{filename}'):
                 filesystem.remove_file(f'{load_dir}/{filename}')
                 filesystem.wait_until_removed(f'{load_dir}/{filename}')
             browser.open_available_browser(link)
             browser.wait_until_element_is_visible(locator='css:div#business-case-pdf a')
             browser.click_element(locator='css:div#business-case-pdf a')
-            filenames.append(filename)
+            filepaths[link] = f'{load_dir}/{filename}'
             filesystem.wait_until_created(
                 f'{load_dir}/{filename}',
                 timeout=60.0*5
             )
             browser.close_all_browsers()
-        return filenames
+        return filepaths
 
     @classmethod
-    def parse(cls, filename):
-        pass
+    def parse(cls, filepath):
+        pdf = PDF()
+        text = pdf.get_text_from_pdf(filepath)
+        for _, string_ in text.items():
+            if 'Section A' in string_:
+                if 'Section B' in string_:
+                    section_A = string_.split('Section B')[0]
+                else:
+                    section_A = string_
+                match_obj = re.search(
+                    'Name of this Investment\: ([\n\d()A-Za-z \,\-]+).*2. Unique Investment Identifier .UII.: ([\d\- ]+)',
+                    section_A,
+                    re.DOTALL
+                )
+                if match_obj is None or match_obj.group(2) is None:
+                    log(f'name or uii not found in {filepath}')
+                name = match_obj.group(1).strip()
+                uii = match_obj.group(2).strip()
+                return name, uii
+
+    @classmethod
+    def validate(cls, individual_investments, filepaths):
+        for individual_investment in individual_investments:
+            if individual_investment['link']:
+                filepath = filepaths[individual_investment['link']]
+                name_of_this_investment, UII = cls.parse(filepath)
+                if name_of_this_investment != individual_investment['Investment Title']:
+                    log(
+                        message=f'{name_of_this_investment}) not equal {individual_investment["Investment Title"]} link: {individual_investment["link"]}'
+                    )
 
 
-class ElementNotLoaded(Exception):
-    pass
+def log(message):
+    print(message)
