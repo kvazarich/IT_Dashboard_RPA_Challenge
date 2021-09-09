@@ -21,7 +21,7 @@ class ITDashboardRobot:
         helper = XlsxSaver(
             values=list_agencies,
             worksheet='Agencies',
-            path='output/load_agencies_test.xlsx',
+            path=f'{self.output_folder}/load_agencies.xlsx',
             exclude_keys=['links']
         )
         helper.fill_workbook()
@@ -31,12 +31,13 @@ class ITDashboardRobot:
         helper = XlsxSaver(
             values=details,
             worksheet='IndividualInvestments',
-            path='load_agencies_test.xlsx',
+            path=f'{self.output_folder}/load_agencies.xlsx',
             workbook=workbook,
             exclude_keys=['link']
         )
         helper.fill_workbook()
         helper.save_workbook()
+        helper.close()
         browser = Selenium()
-        filepaths = PDFHelper.load_bulk(links=links, browser=browser, folder_to_load='output')
+        filepaths = PDFHelper.load_bulk(links=links, browser=browser, folder_to_load=f'{self.output_folder}/PDFs')
         PDFHelper.validate(details, filepaths)
