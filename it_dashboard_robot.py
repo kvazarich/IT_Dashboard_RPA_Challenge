@@ -13,7 +13,7 @@ class ITDashboardRobot:
         self.output_folder = 'output'
         self.list_parser = AgenciesListParser()
         self.detail_parser = IndividualInvestmentsParser('005')
-        logfile = self.output_folder + 'log_file.log'
+        logfile = f'{self.output_folder}/log_file.log'
         logging.basicConfig(level=logging.INFO, filename=logfile)
 
     def run(self):
