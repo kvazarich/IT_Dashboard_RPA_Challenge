@@ -39,5 +39,5 @@ class ITDashboardRobot:
         helper.save_workbook()
         helper.close()
         browser = Selenium()
-        filepaths = PDFHelper.load_bulk(links=links, browser=browser, folder_to_load=f'{self.output_folder}/PDFs')
+        filepaths = PDFHelper.load_bulk(links=links, browser=browser, folder_to_load=self.output_folder)
         PDFHelper.validate(details, filepaths)
