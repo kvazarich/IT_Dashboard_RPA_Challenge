@@ -1,3 +1,5 @@
+import logging
+
 from RPA.Excel.Files import Files
 from RPA.Browser.Selenium import Selenium
 from RPA.FileSystem import FileSystem
@@ -7,12 +9,13 @@ from RPA.PDF import PDF
 
 
 class XlsxSaver:
-    def __init__(self, values: list, worksheet: str, path: str, workbook=None):
+    def __init__(self, values: list, worksheet: str, path: str, workbook=None, exclude_keys=None):
         files = Files()
         if workbook is None:
             self._workbook = files.create_workbook(path=path)
         else:
             self._workbook = workbook
+        self._exclude_keys = exclude_keys or []
         self._workbook.create_worksheet(worksheet)
         self._headers_index = {}
         self._worksheet = worksheet
@@ -21,8 +24,9 @@ class XlsxSaver:
 
     def _fill_headers(self, headers):
         for num, val in enumerate(headers):
-            self._headers_index[val] = num + 1
-            self._workbook.set_cell_value(1, num + 1, val, self._worksheet)
+            if val not in self._exclude_keys:
+                self._headers_index[val] = num + 1
+                self._workbook.set_cell_value(1, num + 1, val, self._worksheet)
 
     def fill_workbook(self):
         self._fill_headers(self._values[0].keys())
@@ -32,12 +36,13 @@ class XlsxSaver:
 
     def _fill_row(self, row, row_num):
         for key, value in row.items():
-            self._workbook.set_cell_value(
-                row_num,
-                self._headers_index[key],
-                value,
-                self._worksheet
-            )
+            if key not in self._exclude_keys:
+                self._workbook.set_cell_value(
+                    row_num,
+                    self._headers_index[key],
+                    value,
+                    self._worksheet
+                )
 
     def get_workbook(self):
         return self._workbook
@@ -90,7 +95,7 @@ class PDFHelper:
                     re.DOTALL
                 )
                 if match_obj is None or match_obj.group(2) is None:
-                    log(f'name or uii not found in {filepath}')
+                    logging.error(msg=f'name or uii not found in {filepath}')
                 name = match_obj.group(1).strip()
                 uii = match_obj.group(2).strip()
                 return name, uii
@@ -102,10 +107,9 @@ class PDFHelper:
                 filepath = filepaths[individual_investment['link']]
                 name_of_this_investment, UII = cls.parse(filepath)
                 if name_of_this_investment != individual_investment['Investment Title']:
-                    log(
-                        message=f'{name_of_this_investment}) not equal {individual_investment["Investment Title"]} link: {individual_investment["link"]}'
+                    logger = logging.getLogger()
+                    logger.info(
+                        msg=f'{name_of_this_investment}) not equal {individual_investment["Investment Title"]} link: {individual_investment["link"]}'
                     )
 
 
-def log(message):
-    print(message)
